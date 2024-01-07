@@ -1,0 +1,4 @@
+phone_number = { "+" ~ "380" ~ (operator_code) ~ subscriber_number }
+operator_code = { "67" | "68" | "96" | "97" | "98" | "50" | "66" | "95" | "99" | "63" | "73" | "93" | "44" | "32" | "48" | "56" | "61" | "64" | "69" | "45" | "46" | "47" | "51" | "52" | "53" | "54" | "55" }
+subscriber_number = { ASCII_DIGIT{7} }
+ASCII_DIGIT = { '0'..'9' }
