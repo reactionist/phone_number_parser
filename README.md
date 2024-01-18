@@ -17,6 +17,7 @@ The parsing rules are defined using the `pest` grammar.
 
 ```bash
 phone_number = { "+" ~ "380" ~ (operator_code) ~ subscriber_number }
+local_format = { operator_code ~ subscriber_number }
 operator_code = { "67" | "68" | "96" | "97" | "98" | "50" | "66" | "95" | "99" | "63" | "73" | "93" | "44" | "32" | "48" | "56" | "61" | "64" | "69" | "45" | "46" | "47" | "51" | "52" | "53" | "54" | "55" }
 subscriber_number = { ASCII_DIGIT{7} }
 ASCII_DIGIT = { '0'..'9' }
@@ -54,6 +55,12 @@ Example:
 
 ```bash
 make parse PHONE_NUMBER=+380977621905
+```
+
+Or this command to parse a local phone number:
+
+```bash
+make parse_local PHONE_NUMBER=[phone_number]
 ```
 
 To show information about how to use Phone Number parser CLI run `help`.

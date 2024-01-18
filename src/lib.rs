@@ -12,6 +12,7 @@ pub struct ParsedPhoneNumber {
     pub operator: String,
     pub operator_name: String,
     pub subscriber_number: String,
+    pub is_local_format: bool,  
 }
 
 #[derive(Debug)]
@@ -32,6 +33,34 @@ impl std::error::Error for ParsePhoneNumberError {}
 pub fn parse_phone_number(
     phone_number_string: &str,
 ) -> Result<ParsedPhoneNumber, ParsePhoneNumberError> {
+    if !phone_number_string.starts_with("+380") {
+        return Err(ParsePhoneNumberError::InvalidInput(
+            "Full format phone number must start with +380".to_string(),
+        ));
+    }
+
+    parse_phone_number_internal(phone_number_string, false)
+}
+
+pub fn parse_phone_number_local(
+    phone_number_string: &str,
+) -> Result<ParsedPhoneNumber, ParsePhoneNumberError> {
+    let local_phone_number = if phone_number_string.starts_with("+380") {
+        phone_number_string.trim_start_matches("+380").to_string()
+    } else {
+        phone_number_string.to_string()
+    };
+
+    // Debug print to check the input
+    println!("Parsing local phone number: {}", &local_phone_number);
+
+    parse_phone_number_internal(&local_phone_number, true)
+}
+
+fn parse_phone_number_internal(
+    phone_number_string: &str,
+    is_local_format: bool,
+) -> Result<ParsedPhoneNumber, ParsePhoneNumberError> {
     if phone_number_string.is_empty() {
         return Err(ParsePhoneNumberError::InvalidInput(
             "Phone number is empty".to_string(),
@@ -47,15 +76,16 @@ pub fn parse_phone_number(
         ));
     }
 
-    let pairs =
-        PhoneNumberParser::parse(Rule::phone_number, phone_number_string).map_err(|_| {
-            ParsePhoneNumberError::InvalidInput("Error parsing phone number".to_string())
-        })?;
+    let pairs = PhoneNumberParser::parse(Rule::phone_number, phone_number_string).map_err(|e| {
+        // Provide detailed error information
+        ParsePhoneNumberError::InvalidInput(format!("Error parsing phone number: {}", e))
+    })?;
 
     let mut parsed_phone_number = ParsedPhoneNumber {
         operator: String::new(),
         operator_name: String::new(),
         subscriber_number: String::new(),
+        is_local_format,
     };
 
     for pair in pairs {
@@ -91,7 +121,6 @@ fn get_operator_or_area_name(code: &str) -> Result<String, ParsePhoneNumberError
         "91" => Ok("3mob".to_string()),
         "92" => Ok("PEOPLEnet".to_string()),
         "94" => Ok("Intertelecom".to_string()),
-
         "44" => Ok("Kyiv City".to_string()),
         "32" => Ok("Lviv Oblast".to_string()),
         "48" => Ok("Odesa Oblast".to_string()),
@@ -107,10 +136,19 @@ fn get_operator_or_area_name(code: &str) -> Result<String, ParsePhoneNumberError
         "53" => Ok("Poltava Oblast".to_string()),
         "54" => Ok("Sumy Oblast".to_string()),
         "55" => Ok("Kherson Oblast".to_string()),
-
         _ => Err(ParsePhoneNumberError::InvalidInput(format!(
             "Invalid operator or area code: {}",
             code
         ))),
+    }
+}
+
+impl ParsedPhoneNumber {
+    pub fn formatted(&self) -> String {
+        if self.is_local_format {
+            format!("{}{}", self.operator, self.subscriber_number)
+        } else {
+            format!("+380{}{}", self.operator, self.subscriber_number)
+        }
     }
 }

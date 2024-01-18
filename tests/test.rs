@@ -1,6 +1,8 @@
 extern crate phone_number_parser;
 
-use phone_number_parser::parse_phone_number;
+use pest::Parser;
+
+use phone_number_parser::{parse_phone_number, parse_phone_number_local, PhoneNumberParser, Rule};
 use phone_number_parser::ParsePhoneNumberError;
 
 #[cfg(test)]
@@ -8,10 +10,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_valid_phone_number() {
+    fn test_valid_full_phone_number() {
         let phone_number = "+380977621906";
         let result = parse_phone_number(phone_number);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_valid_local_phone_number() {
+        let phone_number = "977621906"; 
+        let result = parse_phone_number_local(phone_number);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_valid_subscriber_number() {
+        let subscriber_number = "1234567";
+        let result = PhoneNumberParser::parse(Rule::subscriber_number, subscriber_number);
+
+        assert!(result.is_ok(), "Subscriber number should be valid");
     }
 
     #[test]
@@ -20,14 +37,14 @@ mod tests {
         let result = parse_phone_number(phone_number);
         assert!(result.is_ok(), "The phone number should be valid.");
         if let Ok(parsed) = result {
-            assert_eq!(parsed.operator, "97", "Operator code should be 50");
+            assert_eq!(parsed.operator, "97", "Operator code should be 97");
             assert_eq!(
                 parsed.operator_name, "Kyivstar",
-                "Operator name should be Vodafone"
+                "Operator name should be Kyivstar"
             );
             assert_eq!(
                 parsed.subscriber_number, "9663406",
-                "Subscriber number should be 970663406"
+                "Subscriber number should be 9663406"
             );
         }
     }
